@@ -54,11 +54,13 @@ function isPasswordExpired(user) {
 
 function defaultServerNodes() {
   return [
-    { label: "Cloudflare(Overseas)", url: "https://inventory-staging.wuchunkei.xyz/api" },
-    { label: "Ngrok", url: "https://arguable-olive-anew.ngrok-free.dev/api" },
-    { label: "Tailscale", url: "https://hkx86-production.longhair-mizar.ts.net/api" },
-    { label: "CMLink", url: "https://inventory-cmlink.wuchunkei.com/api" },
-    { label: "CTExcel", url: "https://inventory-ctexcel.wuchunkei.com/api" }
+    { label: "Cloudflare(HKG)", url: "https://inventory-cloudflare.wuchunkei.com/api" },
+    { label: "Tailscale(HKG)", url: "https://hkx86-production.longhair-mizar.ts.net/api" },
+    { label: "Ngrok(HKG)", url: "https://arguable-olive-anew.ngrok-free.dev/api" },
+    { label: "Cloudflare(SJC)", url: "https://sanjose.wuchunkei.com/api" },
+    { label: "Oracle(SJC)", url: "https://sjc.wuchunkei.com:5173/api" },
+    { label: "CTExcel", url: "https://inventory-ctexcel.wuchunkei.com:55173/api" },
+    { label: "CMLink", url: "https://inventory-cmlink.wuchunkei.com:55173/api" }
   ];
 }
 
