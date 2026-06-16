@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "Inventory";
+"NSBluetoothAlwaysUsageDescription" = "Inventory 會使用藍牙連接掃描器及附近的庫存設備。";
+"NSCameraUsageDescription" = "Inventory 會使用相機掃描 QR Code。";
+"NSLocalNetworkUsageDescription" = "Inventory 會在測試時連接本機開發 API。";

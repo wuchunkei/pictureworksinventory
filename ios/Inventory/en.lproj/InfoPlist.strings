@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "Inventory";
+"NSBluetoothAlwaysUsageDescription" = "Inventory uses Bluetooth to discover supported scanners and nearby inventory devices.";
+"NSCameraUsageDescription" = "Inventory uses the camera to scan QR codes.";
+"NSLocalNetworkUsageDescription" = "Inventory connects to the local development API while testing.";

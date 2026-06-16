@@ -1,0 +1,37 @@
+# ---- Secrets ----
+**/.env
+!**/.env.example
+*.key
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+# ---- macOS ----
+.DS_Store
+
+# ---- iOS / Xcode ----
+**/build/
+**/DerivedData/
+*.xcuserstate
+**/xcuserdata/
+*.xcscmblueprint
+
+# ---- Android / Gradle ----
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+*.apk
+*.aab
+
+# ---- Node ----
+**/node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ---- Misc ----
+*.log
+.cache/

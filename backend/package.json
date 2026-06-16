@@ -1,0 +1,24 @@
+{
+  "name": "inventory-borrowing-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone API service for the Inventory Borrowing system.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "API_PORT=4000 node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "archiver": "^8.0.0",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "mongodb": "^6.8.0",
+    "pdfkit": "^0.18.0",
+    "xlsx": "^0.18.5",
+    "nodemailer": "^6.9.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

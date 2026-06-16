@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "users": [
+    {
+      "id": "user_staff",
+      "username": "staff",
+      "name": "Staff Demo",
+      "role": "staff",
+      "phone": "10000000001",
+      "phoneCountryCode": "+86",
+      "email": "staff@example.com",
+      "passwordHash": "scrypt:ad60241b36d9036aa51de4d2aed181bc:9e6d406dd04c1181d8882a23919ea0d56d7512de8eb3bafd3e5ab7fa3b4d0339cdaa125373725a487f374f2bff23dfd6d22afaab25fbe037d067935246fee201",
+      "passwordResetRequired": false,
+      "isDisabled": false,
+      "disabledAt": null,
+      "warehouseIds": [
+        "company_pwbj"
+      ],
+      "branchIds": [
+        "park_ubr"
+      ],
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z",
+      "sessions": []
+    },
+    {
+      "id": "user_manager",
+      "username": "manager",
+      "name": "Manager Demo",
+      "role": "warehouse_manager",
+      "phone": "10000000002",
+      "phoneCountryCode": "+86",
+      "email": "manager@example.com",
+      "passwordHash": "scrypt:b924390ce805b6b017c3bb9a81a4cc41:c5673122593c2c5ad317f1aa4a083217f48c94c0f7f1e7a4f13eeaabad74df327ac6fbe8ba589e4bcebaf20471239c779ade85d8cf240753cd5d5e2864936c55",
+      "passwordResetRequired": false,
+      "isDisabled": false,
+      "disabledAt": null,
+      "warehouseIds": [
+        "company_pwbj"
+      ],
+      "branchIds": [],
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z",
+      "sessions": []
+    },
+    {
+      "id": "user_admin",
+      "username": "admin",
+      "name": "Admin Demo",
+      "role": "admin",
+      "phone": "10000000003",
+      "phoneCountryCode": "+86",
+      "email": "admin@example.com",
+      "passwordHash": "scrypt:40747c0f94f3342ee50361a9cb845e9d:c08ff2a72f6a461a355cc6bb01d01ca8ac92c2ddee7eff4daeb20687a50de2e7bd9379c720514e3b44fe6fa7a3024357dbc377edb97cd7d614913cd41c839d3c",
+      "passwordResetRequired": false,
+      "isDisabled": false,
+      "disabledAt": null,
+      "warehouseIds": [
+        "company_pwbj"
+      ],
+      "branchIds": [],
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z",
+      "sessions": []
+    },
+    {
+      "id": "user_superadmin",
+      "username": "superadmin",
+      "name": "Superadmin Demo",
+      "role": "superadmin",
+      "phone": "10000000004",
+      "phoneCountryCode": "+86",
+      "email": "superadmin@example.com",
+      "passwordHash": "scrypt:7d83ce8fbf623fd8eb0bc7f3c7702a8d:58214b4019089e056fa1a668ee811ffcff76ef2f482e0e12c9df536a01c5f48557031d1206711be56055ba102f9f7d915884b52b718ac8bdd9ac83c29ba39809",
+      "passwordResetRequired": false,
+      "isDisabled": false,
+      "disabledAt": null,
+      "warehouseIds": [],
+      "branchIds": [],
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z",
+      "sessions": []
+    }
+  ],
+  "warehouses": [
+    {
+      "id": "company_pwbj",
+      "code": "PWBJ",
+      "name": "PictureWorks Beijing",
+      "branches": [
+        {
+          "id": "park_ubr",
+          "name": "UBR",
+          "createdAt": "2026-06-01T03:18:39.941Z",
+          "updatedAt": "2026-06-01T03:18:39.941Z"
+        },
+        {
+          "id": "park_shanghai",
+          "name": "Shanghai Office",
+          "createdAt": "2026-06-01T03:18:39.941Z",
+          "updatedAt": "2026-06-01T03:18:39.941Z"
+        }
+      ],
+      "categories": [
+        {
+          "id": "category_cam",
+          "code": "CAM",
+          "createdAt": "2026-06-01T03:18:39.941Z",
+          "updatedAt": "2026-06-01T03:18:39.941Z"
+        },
+        {
+          "id": "category_ce",
+          "code": "CE",
+          "createdAt": "2026-06-01T03:18:39.941Z",
+          "updatedAt": "2026-06-01T03:18:39.941Z"
+        }
+      ],
+      "descriptions": [
+        {
+          "id": "description_camera",
+          "branchId": "park_ubr",
+          "text": "Sony A7 camera kit",
+          "createdAt": "2026-06-01T03:18:39.941Z",
+          "updatedAt": "2026-06-01T03:18:39.941Z"
+        },
+        {
+          "id": "description_tripod",
+          "branchId": "park_ubr",
+          "text": "Carbon fiber tripod",
+          "createdAt": "2026-06-01T03:18:39.941Z",
+          "updatedAt": "2026-06-01T03:18:39.941Z"
+        }
+      ],
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z"
+    }
+  ],
+  "skus": [
+    {
+      "id": "sku_camera_0001",
+      "skuCode": "PWBJ-CAM-0001",
+      "skuNumber": "PWBJ-CAM-0001",
+      "warehouseId": "company_pwbj",
+      "categoryId": "category_cam",
+      "branchId": "park_ubr",
+      "serialNumber": "SN-CAM-0001",
+      "descriptionId": "description_camera",
+      "descriptionText": "Sony A7 camera kit",
+      "status": "available",
+      "borrowedByUserId": null,
+      "borrowedAt": null,
+      "repairStartedAt": null,
+      "disposalType": null,
+      "soldTo": null,
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z"
+    },
+    {
+      "id": "sku_camera_0002",
+      "skuCode": "PWBJ-CAM-0002",
+      "skuNumber": "PWBJ-CAM-0002",
+      "warehouseId": "company_pwbj",
+      "categoryId": "category_cam",
+      "branchId": "park_ubr",
+      "serialNumber": "SN-CAM-0002",
+      "descriptionId": "description_camera",
+      "descriptionText": "Sony A7 camera kit",
+      "status": "borrowed",
+      "borrowedByUserId": "user_staff",
+      "borrowedAt": "2026-06-01T03:18:39.941Z",
+      "repairStartedAt": null,
+      "disposalType": null,
+      "soldTo": null,
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z"
+    },
+    {
+      "id": "sku_tripod_0001",
+      "skuCode": "PWBJ-CE-0001",
+      "skuNumber": "PWBJ-CE-0001",
+      "warehouseId": "company_pwbj",
+      "categoryId": "category_ce",
+      "branchId": "park_ubr",
+      "serialNumber": "SN-CE-0001",
+      "descriptionId": "description_tripod",
+      "descriptionText": "Carbon fiber tripod",
+      "status": "repairing",
+      "borrowedByUserId": null,
+      "borrowedAt": null,
+      "repairStartedAt": "2026-06-01T03:18:39.941Z",
+      "disposalType": null,
+      "soldTo": null,
+      "createdAt": "2026-06-01T03:18:39.941Z",
+      "updatedAt": "2026-06-01T03:18:39.941Z"
+    }
+  ],
+  "records": [],
+  "notifications": [],
+  "userLogs": [
+    {
+      "id": "log_0a5a8ab0-81e2-4c1b-9a98-4a774a7787a2",
+      "type": "login_failed",
+      "entityType": "session",
+      "entityId": "user_superadmin",
+      "actorUserId": "user_superadmin",
+      "actorName": "Superadmin Demo",
+      "actorRole": "superadmin",
+      "message": "Wrong password for Superadmin Demo.",
+      "metadata": {},
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-06-03T03:44:10.113Z"
+    }
+  ],
+  "notificationSettings": {
+    "smtp": {
+      "enabled": false,
+      "health": "unable",
+      "lastTestAt": null
+    },
+    "templates": {}
+  },
+  "wecomDirectory": {
+    "latestImportAt": null,
+    "members": []
+  }
+}

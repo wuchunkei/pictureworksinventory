@@ -1,0 +1,13 @@
+{
+  "name": "inventory-borrowing-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Single-port web gateway for Inventory Borrowing.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

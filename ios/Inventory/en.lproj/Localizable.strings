@@ -1,0 +1,9 @@
+"Language" = "Language";
+"Theme" = "Theme";
+"Server node" = "Server node";
+"Notifications" = "Notifications";
+"This node can't be selected due to regional protection regulations." = "This node can't be selected due to regional protection regulations.";
+"Location & Privacy" = "Location & Privacy";
+"To choose the best server and for security auditing, this app records your IP address and approximate location each time you use it and on every operation. Your precise location is sensitive personal information — you can decline and we'll record only your IP." = "To choose the best server and for security auditing, this app records your IP address and approximate location each time you use it and on every operation. Your precise location is sensitive personal information — you can decline and we'll record only your IP.";
+"Allow Location" = "Allow Location";
+"Decline (IP only)" = "Decline (IP only)";
