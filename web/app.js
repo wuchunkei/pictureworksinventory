@@ -127,7 +127,7 @@ async function probeNode(n) {
 
 function openNodePicker() {
   const lat = {}; // label -> ms | null(offline) | undefined(measuring)
-  const latText = (label) => !(label in lat) ? "…" : (lat[label] == null ? "超時" : lat[label] + " ms");
+  const latText = (label) => !(label in lat) ? "…" : (lat[label] == null ? "Timeout" : lat[label] + " ms");
   const wrap = h("div", {});
   async function pick(fn) { fn(); close(); try { await reloadAndRender(); } catch (e) { toast(e.message); } }
   function draw() {
@@ -135,7 +135,7 @@ function openNodePicker() {
     // Recommended (auto-fastest). A blue ✓ when currently in auto mode.
     const best = recommendedNode(lat);
     wrap.append(h("div", { class: "list-card", onclick: () => pick(() => chooseRecommended(best && best.label)) },
-      h("span", { class: "grow" }, "⚡ 推荐（自动选择最快）" + (best ? " · " + best.label : "")),
+      h("span", { class: "grow" }, "⚡ Recommended (auto, fastest)" + (best ? " · " + best.label : "")),
       nodeAuto() ? h("span", { style: "color:var(--blue)" }, "✓") : h("span", { class: "muted" }, latText(best && best.label))));
     // All nodes grouped by country/region.
     const byRegion = {};
@@ -157,7 +157,7 @@ function openNodePicker() {
   }
   draw();
   const close = modal({ title: "Server Node", body: h("div", {}, wrap,
-    h("div", { class: "muted", style: "margin-top:8px;font-size:12px" }, "选择「推荐」后每次自动用最快节点；选具体节点则固定使用它。")),
+    h("div", { class: "muted", style: "margin-top:8px;font-size:12px" }, "Recommended auto-uses the fastest node each time; a specific node stays pinned.")),
     actions: [h("button", { class: "btn outline", onclick: () => close() }, "Close")] });
   // Measure latencies in the background and re-render as results arrive.
   ServerNodes.forEach(async (n) => { lat[n.label] = await measureNode(n); draw(); });
@@ -395,17 +395,17 @@ function renderServerSelect() {
   const card = h("div", { class: "card login-card", style: "padding:24px" });
   app.append(h("div", { class: "login-wrap" }, card));
   const lat = {};
-  const latText = (label) => !(label in lat) ? "…" : (lat[label] == null ? "超時" : lat[label] + " ms");
+  const latText = (label) => !(label in lat) ? "…" : (lat[label] == null ? "Timeout" : lat[label] + " ms");
   function proceed() { applyNodePreferenceOnLaunch().finally(renderLogin); }
   function draw() {
     clear(card);
     card.append(
-      h("h1", {}, "选择服务器"),
-      h("div", { class: "muted", style: "margin-bottom:16px" }, "首次使用，请先选择一个服务器节点。选择「推荐」后每次都会自动使用最快的节点；选择具体节点则会固定使用它。"));
+      h("h1", {}, "Choose a server"),
+      h("div", { class: "muted", style: "margin-bottom:16px" }, "First time here: choose a server node. Recommended auto-uses the fastest node every time; a specific node stays fixed until you change it."));
     const best = recommendedNode(lat);
     card.append(h("button", { class: "btn", style: "width:100%;text-align:left;margin-bottom:14px",
       onclick: () => { chooseRecommended(best && best.label); proceed(); } },
-      "⚡ 推荐（自动选择最快）" + (best ? "  ·  " + best.label + "  " + latText(best.label) : "")));
+      "⚡ Recommended (auto, fastest)" + (best ? "  ·  " + best.label + "  " + latText(best.label) : "")));
     const byRegion = {}; ServerNodes.forEach(n => { (byRegion[nodeRegion(n.label)] ||= []).push(n); });
     const regions = NODE_REGION_ORDER.filter(r => byRegion[r]).concat(Object.keys(byRegion).filter(r => !NODE_REGION_ORDER.includes(r)));
     for (const region of regions) {
