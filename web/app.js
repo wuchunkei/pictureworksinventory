@@ -32,9 +32,13 @@ function acquireGeo() {
 // (which forwards the visitor's country) — the default/recommended route.
 // All staging nodes share one Atlas DB, so a session is valid across nodes.
 const ServerNodes = [
-  { label: "Cloudflare (Staging)", baseUrl: "" },
-  { label: "CMLink (Staging)", baseUrl: "https://inventory-staging-cmlink.wuchunkei.com:5173" },
-  { label: "CTExcel (Staging)", baseUrl: "https://inventory-staging-ctexcel.wuchunkei.com:5173" },
+  { label: "Cloudflare(HKG)", baseUrl: "" },
+  { label: "Tailscale(HKG)", baseUrl: "https://hkx86-production.longhair-mizar.ts.net" },
+  { label: "Ngrok(HKG)", baseUrl: "https://arguable-olive-anew.ngrok-free.dev" },
+  { label: "Cloudflare(SJC)", baseUrl: "https://sanjose.wuchunkei.com" },
+  { label: "Oracle(SJC)", baseUrl: "https://sjc.wuchunkei.com:5173" },
+  { label: "CTExcel", baseUrl: "https://inventory-ctexcel.wuchunkei.com:55173" },
+  { label: "CMLink", baseUrl: "https://inventory-cmlink.wuchunkei.com:55173" },
 ];
 const Node = { label: localStorage.getItem("nodeLabel") || ServerNodes[0].label, restricted: false };
 function selectedNode() { return ServerNodes.find(n => n.label === Node.label) || ServerNodes[0]; }
