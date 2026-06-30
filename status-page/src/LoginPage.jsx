@@ -361,8 +361,8 @@ function LoginPage() {
   return (
     <main className="relative min-h-dvh overflow-hidden bg-black text-white">
       <LoginBackground />
-      <section className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-5 pb-7 pt-5">
-        <LoginNavigation />
+      <LoginNavigation />
+      <section className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-5 py-28 sm:py-32">
         <BackendNodeNavigation
           activeNode={activeNode}
           latencies={latencies}
@@ -370,7 +370,7 @@ function LoginPage() {
           onMeasure={measureNodes}
         />
 
-        <div className="flex flex-1 items-center py-8">
+        <div className="mt-4">
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -455,8 +455,6 @@ function LoginPage() {
             </div>
           </motion.div>
         </div>
-
-        <LoginFooterMenu />
       </section>
     </main>
   );
@@ -483,24 +481,63 @@ function LoginBackground() {
 }
 
 function LoginNavigation() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="rounded-full border border-white/10 bg-black/32 px-4 py-3 shadow-glass backdrop-blur-2xl">
-      <div className="flex items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-white/14 bg-white/8">
-          <img src="/pictureworks-status-icon.svg" alt="" className="size-8" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium leading-none">Pictureworks Inventory</p>
-          <p className="mt-1 text-xs text-white/46">Login Page</p>
-        </div>
-        <a
-          href="/"
-          className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-3 text-[11px] font-semibold text-white/68 transition hover:bg-white/10 hover:text-white"
-        >
-          Home
+    <header className="fixed inset-x-0 top-0 z-30 px-5 py-5 sm:px-8 lg:px-12">
+      <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-black/28 px-4 py-3 shadow-glass backdrop-blur-2xl">
+        <a href="/" className="flex min-w-0 items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-white/14 bg-white/8">
+            <img src="/pictureworks-status-icon.svg" alt="" className="size-8" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium leading-none">Pictureworks Inventory</p>
+            <p className="mt-1 text-xs text-white/46">Login Page</p>
+          </div>
         </a>
+        <nav className="hidden shrink-0 items-center gap-2 sm:flex">
+          <a
+            href="https://inventory-status.wuchunkei.com/"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/72 transition hover:bg-white/10 hover:text-white"
+          >
+            Status
+          </a>
+          <a
+            href="/"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-white px-4 text-xs font-semibold text-black transition hover:bg-white/90"
+          >
+            Home
+          </a>
+        </nav>
+        <div className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/78 transition hover:bg-white/10 hover:text-white"
+          >
+            Menu
+            <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
+              <a
+                href="https://inventory-status.wuchunkei.com/"
+                className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+              >
+                Status
+              </a>
+              <a
+                href="/"
+                className="mt-2 flex h-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
+              >
+                Home
+              </a>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -527,40 +564,6 @@ function BackendNodeNavigation({ activeNode, latencies, isMeasuring, onMeasure }
           <Wifi className={`size-4 ${isMeasuring ? "animate-pulse" : ""}`} />
         </button>
       </div>
-    </div>
-  );
-}
-
-function LoginFooterMenu() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <div className="relative flex justify-center">
-      <button
-        type="button"
-        onClick={() => setMenuOpen((open) => !open)}
-        aria-expanded={menuOpen}
-        className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/62 transition hover:bg-white/10 hover:text-white"
-      >
-        Menu
-        <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
-      </button>
-      {menuOpen && (
-        <div className="absolute bottom-12 left-1/2 w-40 -translate-x-1/2 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
-          <a
-            href="https://inventory-status.wuchunkei.com/"
-            className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
-          >
-            Status
-          </a>
-          <a
-            href="/"
-            className="mt-2 flex h-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
-          >
-            Home
-          </a>
-        </div>
-      )}
     </div>
   );
 }
