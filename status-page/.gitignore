@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.npm-cache/
+.wrangler-config/
+.wrangler-home/
+.wrangler-dry-run/
+worker-bundle.js
