@@ -497,16 +497,16 @@ function LoginNavigation() {
         </a>
         <nav className="hidden shrink-0 items-center gap-2 sm:flex">
           <a
+            href="/"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-white/70 bg-white/[0.025] px-5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10"
+          >
+            Home
+          </a>
+          <a
             href="https://inventory-status.wuchunkei.com/"
             className="inline-flex h-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/72 transition hover:bg-white/10 hover:text-white"
           >
             Status
-          </a>
-          <a
-            href="/"
-            className="inline-flex h-9 items-center justify-center rounded-full bg-white px-4 text-xs font-semibold text-black transition hover:bg-white/90"
-          >
-            Home
           </a>
         </nav>
         <div className="relative sm:hidden">
@@ -522,16 +522,16 @@ function LoginNavigation() {
           {menuOpen && (
             <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
               <a
-                href="https://inventory-status.wuchunkei.com/"
-                className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
-              >
-                Status
-              </a>
-              <a
                 href="/"
-                className="mt-2 flex h-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
+                className="flex h-10 items-center justify-center rounded-full border border-white/70 bg-white/[0.025] text-xs font-semibold text-white transition hover:border-white hover:bg-white/10"
               >
                 Home
+              </a>
+              <a
+                href="https://inventory-status.wuchunkei.com/"
+                className="mt-2 flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+              >
+                Status
               </a>
             </div>
           )}
