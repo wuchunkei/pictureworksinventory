@@ -508,23 +508,60 @@ function BackgroundCinema() {
 }
 
 function Navigation() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="fixed inset-x-0 top-0 z-30 px-5 py-5 sm:px-8 lg:px-12">
       <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-black/28 px-4 py-3 shadow-glass backdrop-blur-2xl">
-        <div className="flex items-center gap-3">
-          <span className="grid size-9 place-items-center rounded-full border border-white/14 bg-white/8">
+        <a href="https://inventory.wuchunkei.com/" className="flex min-w-0 items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-white/14 bg-white/8">
             <img src="/pictureworks-status-icon.svg" alt="" className="size-8" />
           </span>
-          <div>
-            <p className="text-sm font-medium leading-none">Pictureworks Inventory</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium leading-none">Pictureworks Inventory</p>
             <p className="mt-1 text-xs text-white/46">Status Page</p>
           </div>
-        </div>
-        <div className="hidden items-center gap-2 sm:flex">
-          <Badge variant="success" className="gap-2">
-            <span className="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,.9)]" />
-            Status
-          </Badge>
+        </a>
+        <nav className="hidden shrink-0 items-center gap-2 sm:flex">
+          <a
+            href="https://inventory.wuchunkei.com/"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/72 transition hover:bg-white/10 hover:text-white"
+          >
+            Home
+          </a>
+          <a
+            href="https://inventory.wuchunkei.com/login"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-white px-4 text-xs font-semibold text-black transition hover:bg-white/90"
+          >
+            Login
+          </a>
+        </nav>
+        <div className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/78 transition hover:bg-white/10 hover:text-white"
+          >
+            Menu
+            <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
+              <a
+                href="https://inventory.wuchunkei.com/"
+                className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+              >
+                Home
+              </a>
+              <a
+                href="https://inventory.wuchunkei.com/login"
+                className="mt-2 flex h-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
+              >
+                Login
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </header>
