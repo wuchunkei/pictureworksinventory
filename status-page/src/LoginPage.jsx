@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
   CircleAlert,
   Eye,
   EyeOff,
@@ -455,11 +456,7 @@ function LoginPage() {
           </motion.div>
         </div>
 
-        <div className="flex justify-center">
-          <a href="https://inventory-status.wuchunkei.com/" className="text-xs font-medium text-white/48 transition hover:text-white">
-            Status Page
-          </a>
-        </div>
+        <LoginFooterMenu />
       </section>
     </main>
   );
@@ -509,29 +506,61 @@ function LoginNavigation() {
 
 function BackendNodeNavigation({ activeNode, latencies, isMeasuring, onMeasure }) {
   const latency = latencies[activeNode.label];
+  const latencyText = latency == null ? (isMeasuring ? "Calculating latency..." : "Latency timeout") : `${latency} ms latency`;
+
   return (
     <div className="mt-3 rounded-full border border-white/10 bg-black/32 px-3 py-2 shadow-glass backdrop-blur-2xl">
-      <div className="flex items-center gap-2">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full border border-white/12 bg-white/8">
+      <div className="flex min-h-11 items-center gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-white/12 bg-white/8">
           <Server className="size-4 text-white/74" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium leading-none text-white">{activeNode.label}</p>
-          <p className="mt-1 text-[11px] text-white/42">{activeNode.code}</p>
+          <p className="truncate text-sm font-medium leading-none text-white">Cloudflare</p>
+          <p className="mt-1.5 truncate text-[11px] leading-none text-white/42">{latencyText}</p>
         </div>
         <button
           type="button"
           onClick={onMeasure}
-          className="grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-white/62"
+          className="grid size-9 shrink-0 place-items-center self-center rounded-full border border-white/10 bg-white/[0.04] text-white/62 transition hover:bg-white/10 hover:text-white"
           aria-label="Refresh server latency"
         >
           <Wifi className={`size-4 ${isMeasuring ? "animate-pulse" : ""}`} />
         </button>
       </div>
-      <div className="mt-1 flex items-center justify-between px-10 text-[11px] text-white/42">
-        <span>{activeNode.region}</span>
-        <span>{latency == null ? (isMeasuring ? "measuring..." : "timeout") : `${latency} ms`}</span>
-      </div>
+    </div>
+  );
+}
+
+function LoginFooterMenu() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <div className="relative flex justify-center">
+      <button
+        type="button"
+        onClick={() => setMenuOpen((open) => !open)}
+        aria-expanded={menuOpen}
+        className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/62 transition hover:bg-white/10 hover:text-white"
+      >
+        Menu
+        <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+      </button>
+      {menuOpen && (
+        <div className="absolute bottom-12 left-1/2 w-40 -translate-x-1/2 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
+          <a
+            href="https://inventory-status.wuchunkei.com/"
+            className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+          >
+            Status
+          </a>
+          <a
+            href="/"
+            className="mt-2 flex h-10 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
+          >
+            Home
+          </a>
+        </div>
+      )}
     </div>
   );
 }
