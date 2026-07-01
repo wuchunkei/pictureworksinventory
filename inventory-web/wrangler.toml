@@ -1,0 +1,8 @@
+name = "pictureworks-inventory-prod"
+main = "worker-bundle.js"
+compatibility_date = "2026-01-01"
+
+routes = [
+  { pattern = "inventory.wuchunkei.com/*", zone_name = "wuchunkei.com" },
+  { pattern = "inventory.wuchunkei.xyz", custom_domain = true }
+]

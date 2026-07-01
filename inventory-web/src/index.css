@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: 0 0% 1%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 98%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 68%;
+  --accent: 0 0% 14%;
+  --accent-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 3%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 0 0% 80%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #030303;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #030303;
+  color: white;
+  font-family: Inter, "SF Pro Display", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.glass-edge {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,.42), rgba(255,255,255,.04), rgba(172,218,255,.2));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.liquid-sheen {
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.16), rgba(255,255,255,0) 35%),
+    radial-gradient(circle at 80% 10%, rgba(135,180,255,.14), transparent 32%),
+    rgba(255,255,255,.05);
+}

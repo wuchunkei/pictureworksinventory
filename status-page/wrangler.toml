@@ -4,8 +4,7 @@ compatibility_date = "2026-01-01"
 
 routes = [
   { pattern = "inventory-status.wuchunkei.com", custom_domain = true },
-  { pattern = "inventory-status.wuchunkei.xyz", custom_domain = true },
-  { pattern = "inventory.wuchunkei.xyz", custom_domain = true }
+  { pattern = "inventory-status.wuchunkei.xyz", custom_domain = true }
 ]
 
 [[kv_namespaces]]
