@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const CLOUDFLARE_HKG_NODE = {
+export const CLOUDFLARE_HKG_NODE = {
   label: "Cloudflare Hong Kong",
   code: "Cloudflare(HKG)",
   url: "https://inventory-cloudflare.wuchunkei.com/api",
@@ -42,6 +42,7 @@ const COUNTRY_CODES = [
 
 const AUTH_STORAGE_KEY = "pictureworks_inventory_web_auth";
 const NODE_STORAGE_KEY = "pictureworks_inventory_web_api_base";
+const USER_OBJECT_ID_COOKIE = "pictureworks_inventory_user_object_id";
 
 const STEPS = {
   EMPLOYEE: "employee",
@@ -54,35 +55,57 @@ const STEPS = {
   SIGNED_IN: "signedIn"
 };
 
-function storedNodeUrl() {
-  return CLOUDFLARE_HKG_NODE.url;
+export function storedNodeUrl() {
+  return "/api";
 }
 
 function nodeForUrl(url) {
   return url === CLOUDFLARE_HKG_NODE.url ? CLOUDFLARE_HKG_NODE : CLOUDFLARE_HKG_NODE;
 }
 
-function storedAuth() {
+export function storedAuth() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(AUTH_STORAGE_KEY) || "null");
-    return parsed?.token ? parsed : null;
+    if (!parsed?.currentUser) return null;
+    if (parsed.expiresAt && new Date(parsed.expiresAt).getTime() <= Date.now()) {
+      clearAuth();
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
 }
 
-function saveAuth(session) {
-  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+function cookieExpiry(expiresAt) {
+  const date = expiresAt ? new Date(expiresAt) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toUTCString() : "";
 }
 
-function clearAuth() {
+export function getBackendUserObjectId(user) {
+  return user?.objectId || user?._id || user?.id || "";
+}
+
+export function saveAuth(session) {
+  const { token, ...storedSession } = session || {};
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(storedSession));
+  const objectId = getBackendUserObjectId(session?.currentUser);
+  if (objectId) {
+    const expires = cookieExpiry(session.expiresAt);
+    document.cookie = `${USER_OBJECT_ID_COOKIE}=${encodeURIComponent(objectId)}; path=/; SameSite=Lax${expires ? `; expires=${expires}` : ""}`;
+  }
+}
+
+export function clearAuth() {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  document.cookie = `${USER_OBJECT_ID_COOKIE}=; path=/; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 async function apiRequest(baseUrl, path, { method = "GET", body, token } = {}) {
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`, {
     method,
     cache: "no-store",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -133,6 +156,12 @@ function LoginPage() {
   const [selectedChinaContact, setSelectedChinaContact] = useState("Mark");
 
   const activeNode = nodeForUrl(apiBaseUrl);
+
+  useEffect(() => {
+    if (session?.currentUser && window.location.pathname.replace(/\/$/, "") === "/login") {
+      window.location.replace(`/u/${getBackendUserObjectId(session.currentUser)}/home`);
+    }
+  }, [session?.currentUser]);
 
   useEffect(() => {
     window.localStorage.setItem(NODE_STORAGE_KEY, CLOUDFLARE_HKG_NODE.url);
@@ -188,7 +217,10 @@ function LoginPage() {
 
   const canSubmit = (() => {
     if (step === STEPS.EMPLOYEE) return username.trim().length > 0;
+    if (step === STEPS.PASSWORD) return username.trim() && password;
+    if (step === STEPS.REGISTER) return username.trim() && phone.trim() && newPasswordIsValid();
     if (step === STEPS.RESET_VERIFY) return username.trim() && nameInput.trim() && phone.trim();
+    if (step === STEPS.RESET_PASSWORD) return username.trim() && phone.trim() && newPasswordIsValid();
     if (step === STEPS.SIGNED_IN) return true;
     if (step === STEPS.CHANGE_PASSWORD) return currentPassword && newPasswordIsValid();
     return username.trim().length > 0;
@@ -210,7 +242,6 @@ function LoginPage() {
 
   async function finishAuth(authResponse) {
     const nextSession = {
-      token: authResponse.token,
       expiresAt: authResponse.expiresAt,
       currentUser: authResponse.currentUser,
       apiBaseUrl,
@@ -218,7 +249,6 @@ function LoginPage() {
     };
     try {
       nextSession.bootstrap = await apiRequest(apiBaseUrl, "bootstrap", {
-        token: authResponse.token
       });
     } catch {
       nextSession.bootstrap = null;
@@ -227,7 +257,11 @@ function LoginPage() {
     setSession(nextSession);
     resetSensitiveFields();
     setErrorMessage("");
-    setStep(authResponse.passwordExpired ? STEPS.CHANGE_PASSWORD : STEPS.SIGNED_IN);
+    if (authResponse.passwordExpired) {
+      setStep(STEPS.CHANGE_PASSWORD);
+    } else {
+      window.location.assign(`/u/${getBackendUserObjectId(nextSession.currentUser)}/home`);
+    }
   }
 
   async function submit() {
@@ -269,6 +303,7 @@ function LoginPage() {
       } else if (step === STEPS.REGISTER) {
         const phoneError = validatePhone(phone, phoneCountryCode);
         if (phoneError) throw new Error(phoneError);
+        if (!newPasswordIsValid()) throw new Error("Password must be at least 8 characters and match the confirmation.");
         const response = await apiRequest(apiBaseUrl, "register", {
           method: "POST",
           body: {
@@ -291,6 +326,7 @@ function LoginPage() {
         });
         setStep(STEPS.RESET_PASSWORD);
       } else if (step === STEPS.RESET_PASSWORD) {
+        if (!newPasswordIsValid()) throw new Error("Password must be at least 8 characters and match the confirmation.");
         const response = await apiRequest(apiBaseUrl, "reset-password", {
           method: "POST",
           body: {
@@ -302,9 +338,9 @@ function LoginPage() {
         });
         await finishAuth(response);
       } else if (step === STEPS.CHANGE_PASSWORD) {
+        if (!newPasswordIsValid()) throw new Error("Password must be at least 8 characters and match the confirmation.");
         await apiRequest(apiBaseUrl, "change-password", {
           method: "POST",
-          token: session?.token,
           body: {
             currentPassword,
             newPassword: password,
@@ -312,7 +348,7 @@ function LoginPage() {
           }
         });
         resetSensitiveFields();
-        setStep(STEPS.SIGNED_IN);
+        window.location.assign(`/u/${getBackendUserObjectId(session.currentUser)}/home`);
       }
     } catch (error) {
       setErrorMessage(error.message || "Something went wrong.");
@@ -498,13 +534,13 @@ function LoginNavigation() {
         <nav className="hidden shrink-0 items-center gap-2 sm:flex">
           <a
             href="/"
-            className="inline-flex h-9 items-center justify-center rounded-full border border-white/70 bg-white/[0.025] px-5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10"
+            className="inline-flex h-10 w-24 items-center justify-center rounded-full border border-white/70 bg-white/[0.025] text-xs font-semibold text-white transition hover:border-white hover:bg-white/10"
           >
             Home
           </a>
           <a
             href="https://inventory-status.wuchunkei.com/"
-            className="inline-flex h-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-white/72 transition hover:bg-white/10 hover:text-white"
+            className="inline-flex h-10 w-24 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
           >
             Status
           </a>
@@ -520,16 +556,16 @@ function LoginNavigation() {
             <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
+            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/28 p-2 shadow-glass backdrop-blur-2xl">
               <a
                 href="/"
-                className="flex h-10 items-center justify-center rounded-full border border-white/70 bg-white/[0.025] text-xs font-semibold text-white transition hover:border-white hover:bg-white/10"
+                className="flex h-10 w-full items-center justify-center rounded-full border border-white/70 bg-white/[0.025] text-xs font-semibold text-white transition hover:border-white hover:bg-white/10"
               >
                 Home
               </a>
               <a
                 href="https://inventory-status.wuchunkei.com/"
-                className="mt-2 flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+                className="mt-2 flex h-10 w-full items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition hover:bg-white/90"
               >
                 Status
               </a>
@@ -651,6 +687,7 @@ function CredentialFields(props) {
         <PasswordInput
           label="Current password"
           value={currentPassword}
+          autoComplete="current-password"
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           onChange={setCurrentPassword}
@@ -660,8 +697,9 @@ function CredentialFields(props) {
 
       {[STEPS.PASSWORD, STEPS.REGISTER, STEPS.RESET_PASSWORD, STEPS.CHANGE_PASSWORD].includes(step) && (
         <PasswordInput
-          label={step === STEPS.PASSWORD ? "Password" : step === STEPS.CHANGE_PASSWORD ? "New password (min 8 characters)" : "Password"}
+          label={step === STEPS.PASSWORD ? "Password" : "New password (min 8 characters)"}
           value={password}
+          autoComplete={step === STEPS.PASSWORD ? "current-password" : "new-password"}
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           onChange={setPassword}
@@ -673,6 +711,7 @@ function CredentialFields(props) {
         <PasswordInput
           label="Confirm password"
           value={confirmPassword}
+          autoComplete="new-password"
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           onChange={setConfirmPassword}
@@ -728,7 +767,7 @@ function TextInput({ icon: Icon, label, value, onChange, onSubmit, readOnly = fa
   );
 }
 
-function PasswordInput({ label, value, onChange, onSubmit, showPassword, setShowPassword }) {
+function PasswordInput({ label, value, onChange, onSubmit, showPassword, setShowPassword, autoComplete = "current-password" }) {
   return (
     <label className="block">
       <span className="sr-only">{label}</span>
@@ -737,7 +776,7 @@ function PasswordInput({ label, value, onChange, onSubmit, showPassword, setShow
         <input
           value={value}
           type={showPassword ? "text" : "password"}
-          autoComplete="current-password"
+          autoComplete={autoComplete}
           placeholder={label}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {

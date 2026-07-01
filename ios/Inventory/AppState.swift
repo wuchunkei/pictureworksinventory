@@ -365,12 +365,32 @@ final class AppState: ObservableObject {
     }
 
     var notificationBadgeCount: Int {
-        guard let currentUser else { return 0 }
+        guard let currentUser, canReceiveNotifications else { return 0 }
         return notifications.filter { notification in
             let receivedByMe = notification.recipientUserIds?.contains(currentUser.id) ?? false
             let submittedByMe = notification.senderUserId == currentUser.id
             return notification.isUnreadForBadge && receivedByMe && !submittedByMe
         }.count
+    }
+
+    var canReceiveNotifications: Bool {
+        guard let role = currentUser?.role, role != .staff else { return false }
+        return permissions?.canReceiveNotifications ?? true
+    }
+
+    var canRepairInventory: Bool {
+        let role = currentUser?.role
+        return permissions?.canRepairInventory ?? (role == .admin || role == .superadmin)
+    }
+
+    var canRequestDisposal: Bool {
+        let role = currentUser?.role
+        return permissions?.canRequestDisposal ?? (role == .warehouseManager || role == .admin || role == .superadmin)
+    }
+
+    var canReturnFromRepair: Bool {
+        guard let role = currentUser?.role else { return false }
+        return permissions?.canReturnFromRepair ?? role != .staff
     }
 
     init() {
@@ -576,7 +596,7 @@ final class AppState: ObservableObject {
         skus = response.skus
         users = response.users ?? []
         records = response.records
-        notifications = response.notifications
+        notifications = canReceiveNotifications ? response.notifications : []
         pingAlertRecipientIds = response.pingAlerts?.recipientUserIds ?? []
         errorMessage = nil
         connectionState = .connected

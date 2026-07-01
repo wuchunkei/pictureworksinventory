@@ -8,11 +8,9 @@ Each component lives in its own top-level folder:
 pictureworksinventory/
 ├── ios/                  iOS app (SwiftUI) — Inventory.xcodeproj
 ├── android/              Android app (Jetpack Compose, Gradle)
-├── web/                  Web SPA (index.html + app.js + screens.js)
-│   └── gateway/          standalone Node web server (serves the SPA)
 ├── backend/              Node.js API service
-├── docker/               Containerised backend (Dockerfile + qpdf, for Render/any host)
-└── cloudflare-worker/    Cloudflare Worker fronting the web/api
+├── status-page/          React/Vite Cloudflare(HKG) backend status page
+└── docker/               Containerised backend (Dockerfile + qpdf, for Render/any host)
 ```
 
 ## Components
@@ -21,10 +19,9 @@ pictureworksinventory/
 |--------|-------|-------------|
 | `ios/` | SwiftUI | Open `ios/Inventory.xcodeproj` in Xcode |
 | `android/` | Kotlin / Compose | `cd android && ./gradlew :app:assembleDebug` |
-| `web/` | Vanilla JS SPA | Static `index.html` + `app.js` + `screens.js`; served by `cloudflare-worker/` or `web/gateway/` |
 | `backend/` | Node 20 | `cd backend && npm install && npm start`; MongoDB (`MONGODB_URI`) or JSON fallback |
+| `status-page/` | React / Vite / Tailwind | `cd status-page && npm install && npm run dev`; `npm run deploy:worker` deploys the built static status page to Cloudflare Workers Assets |
 | `docker/` | Docker | Self-contained image (installs `qpdf` for ACF PDF encryption) |
-| `cloudflare-worker/` | CF Worker | `wrangler deploy`; serves the SPA from the edge + proxies `/api/*` |
 
 ## Configuration
 

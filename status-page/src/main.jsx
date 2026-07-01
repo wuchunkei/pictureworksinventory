@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import LoginPage from "./LoginPage.jsx";
+import LoginPage, { clearAuth, getBackendUserObjectId, saveAuth, storedAuth, storedNodeUrl } from "./LoginPage.jsx";
+import InventoryMobileApp from "./InventoryMobileApp.jsx";
 import "./index.css";
 
 const STATUS_API_BASE =
@@ -359,16 +360,112 @@ function useBackendHealth() {
 
 function App() {
   const path = window.location.pathname;
+  const host = window.location.hostname;
   const inventoryHosts = ["inventory.wuchunkei.com", "inventory.wuchunkei.xyz"];
-  const isInventoryHost = inventoryHosts.includes(window.location.hostname);
+  const isInventoryHost = inventoryHosts.includes(host);
+  const isLocalHost = ["localhost", "127.0.0.1"].includes(host);
   if (path === "/login" || path === "/login/") {
     return <LoginPage />;
+  }
+  if ((isInventoryHost || isLocalHost) && isInventoryAppPath(path)) {
+    return <InventoryHomeRoute />;
   }
   if (isInventoryHost) {
     return <InventoryRoot />;
   }
 
   return <StatusApp />;
+}
+
+function isInventoryAppPath(path) {
+  const parts = path.split("/").filter(Boolean);
+  if (parts.length === 0) return false;
+  if (["home", "search", "notify", "status", "me"].includes(parts[0])) return true;
+  if (parts[0] === "u" && parts.length >= 3 && ["home", "search", "notify", "status", "me"].includes(parts[2])) return true;
+  return parts.length >= 2 && ["home", "search", "notify", "status", "me"].includes(parts[1]);
+}
+
+function inventoryRouteParts(path) {
+  const parts = path.split("/").filter(Boolean);
+  if (parts.length === 0) return { legacy: true, view: "home" };
+  if (["home", "search", "notify", "status", "me"].includes(parts[0])) {
+    return { legacy: true, view: parts[0], rest: parts.slice(1) };
+  }
+  if (parts[0] === "u") {
+    return { objectId: parts[1], view: parts[2] || "home", rest: parts.slice(3), hasPrefix: true };
+  }
+  return { objectId: parts[0], view: parts[1] || "home", rest: parts.slice(2) };
+}
+
+function InventoryHomeRoute() {
+  const [session, setSession] = useState(() => storedAuth());
+  const route = inventoryRouteParts(window.location.pathname);
+
+  useEffect(() => {
+    if (!session?.currentUser) {
+      window.location.replace("/login");
+      return;
+    }
+    const objectId = getBackendUserObjectId(session.currentUser);
+    if (!objectId) {
+      clearAuth();
+      window.location.replace("/login");
+      return;
+    }
+    if (route.legacy) {
+      const suffix = [route.view, ...(route.rest || [])].join("/");
+      window.location.replace(`/u/${objectId}/${suffix}`);
+      return;
+    }
+    if (!route.hasPrefix) {
+      const suffix = [route.view, ...(route.rest || [])].join("/");
+      window.location.replace(`/u/${objectId}/${suffix}`);
+      return;
+    }
+    if (route.objectId !== objectId) {
+      clearAuth();
+      window.location.replace("/login");
+      return;
+    }
+    saveAuth(session);
+  }, [session?.currentUser, route.objectId, route.legacy, route.view]);
+
+  if (!session?.currentUser) {
+    return (
+      <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-black px-5 text-white">
+        <BackgroundCinema />
+        <div className="relative z-10 rounded-[8px] border border-white/10 bg-black/34 p-5 text-sm text-white/62 shadow-glass backdrop-blur-2xl">
+          Redirecting to login...
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <InventoryMobileApp
+      session={session}
+      apiBaseUrl={session.apiBaseUrl || storedNodeUrl()}
+      onLogout={async () => {
+        try {
+          await fetch("/api/logout", {
+            method: "POST",
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" }
+          });
+        } catch {
+          // Local sign-out still proceeds even if the server cannot be reached.
+        }
+        clearAuth();
+        setSession(null);
+        window.location.replace("/login");
+      }}
+      onSessionUpdate={(nextSession) => {
+        saveAuth(nextSession);
+        setSession(nextSession);
+      }}
+    />
+  );
 }
 
 function InventoryRoot() {
@@ -437,7 +534,7 @@ function HomeNavigation() {
             <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
+            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/28 p-2 shadow-glass backdrop-blur-2xl">
               <a
                 href="https://inventory-status.wuchunkei.com/"
                 className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
@@ -547,7 +644,7 @@ function Navigation() {
             <ChevronDown className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/72 p-2 shadow-glass backdrop-blur-2xl">
+            <div className="absolute right-0 top-12 w-40 rounded-[8px] border border-white/10 bg-black/28 p-2 shadow-glass backdrop-blur-2xl">
               <a
                 href="https://inventory.wuchunkei.com/"
                 className="flex h-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-xs font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"

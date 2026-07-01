@@ -40,7 +40,11 @@ struct User: Codable, Identifiable, Equatable {
 struct Permissions: Codable, Equatable {
     var canViewInventory: Bool
     var canManageInventory: Bool
+    var canRepairInventory: Bool?
+    var canRequestDisposal: Bool?
+    var canReturnFromRepair: Bool?
     var canManageUsers: Bool
+    var canReceiveNotifications: Bool?
     var canManageAlerts: Bool
     var canViewUserLogs: Bool
     var canReviewApprovals: Bool

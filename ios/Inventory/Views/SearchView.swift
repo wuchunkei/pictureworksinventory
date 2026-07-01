@@ -231,11 +231,11 @@ struct SearchView: View {
     private func availableActions(for item: SKUItem) -> [SKUAction] {
         switch item.status {
         case .available:
-            return [.borrow, .repair]
+            return appState.canRepairInventory ? [.borrow, .repair] : [.borrow]
         case .borrowed:
             return [.returnItem]
         case .repairing:
-            return [.repaired]
+            return appState.canReturnFromRepair ? [.repaired] : []
         case .disposed, .sold:
             return []
         }

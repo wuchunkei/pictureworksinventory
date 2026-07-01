@@ -13,9 +13,11 @@ struct MainTabView: View {
                 SearchView()
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
 
-                NotificationsView()
-                    .tabItem { Label("Notify", systemImage: "bell") }
-                    .badge(appState.notificationBadgeCount > 0 ? appState.notificationBadgeCount : 0)
+                if appState.canReceiveNotifications {
+                    NotificationsView()
+                        .tabItem { Label("Notify", systemImage: "bell") }
+                        .badge(appState.notificationBadgeCount > 0 ? appState.notificationBadgeCount : 0)
+                }
 
                 StatusView()
                     .tabItem { Label("Status", systemImage: "shippingbox") }

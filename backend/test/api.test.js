@@ -17,7 +17,7 @@ function startServer() {
   });
 }
 
-function request(server, method, path, body, token) {
+function request(server, method, path, body, token, extraHeaders = {}) {
   const { port } = server.address();
   return new Promise((resolve, reject) => {
     const payload = body ? JSON.stringify(body) : "";
@@ -30,7 +30,8 @@ function request(server, method, path, body, token) {
         headers: {
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(payload),
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...extraHeaders
         }
       },
       (res) => {
@@ -65,6 +66,21 @@ test("login, bootstrap, lookup and borrow flow", async () => {
     const borrow = await request(server, "POST", "/api/borrow", { skuNumber: "PWBJ-CAM-0001" }, login.body.token);
     assert.equal(borrow.status, 200);
     assert.equal(borrow.body.sku.status, "borrowed");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    fs.rmSync(testStatePath, { force: true });
+  }
+});
+
+test("health reports Cloudflare edge node when cf-ray is present", async () => {
+  const server = await startServer();
+  try {
+    const health = await request(server, "GET", "/api/health", null, null, {
+      "cf-ray": "8f44c92a5d66a1b2-HKG"
+    });
+    assert.equal(health.status, 200);
+    assert.equal(health.body.cloudflareNode.colo, "HKG");
+    assert.equal(health.body.cloudflareNode.ray, "8f44c92a5d66a1b2-HKG");
   } finally {
     await new Promise((resolve) => server.close(resolve));
     fs.rmSync(testStatePath, { force: true });

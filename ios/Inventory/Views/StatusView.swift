@@ -99,6 +99,10 @@ struct StatusDetailView: View {
         appState.skus.first { $0.id == item.id } ?? item
     }
 
+    private var canReturnLiveItem: Bool {
+        liveItem.status == .borrowed || (liveItem.status == .repairing && appState.canReturnFromRepair)
+    }
+
     @State private var showingReturnScan = false
     @State private var actionError: String?
     @State private var isActioning = false
@@ -170,7 +174,7 @@ struct StatusDetailView: View {
     @ViewBuilder
     private var returnButton: some View {
         let label: String = liveItem.status == .repairing ? "Return from Repair" : "Return"
-        if liveItem.status == .borrowed || liveItem.status == .repairing {
+        if canReturnLiveItem {
             VStack(spacing: 0) {
                 Divider()
                 Button {

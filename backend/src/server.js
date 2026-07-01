@@ -79,6 +79,7 @@ function sendJson(res, statusCode, body, headers = {}) {
     "Access-Control-Allow-Origin": headers.origin || "*",
     "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Geo",
+    "Access-Control-Expose-Headers": "CF-Ray",
     "Access-Control-Max-Age": "86400"
   });
   res.end(JSON.stringify(body));
@@ -134,11 +135,21 @@ function cleanseSessions(state) {
 }
 
 function clientIpFrom(req) {
-  // X-Real-IP is set by our web Worker to the visitor's true IP (a Worker
-  // subrequest would otherwise make cf-connecting-ip the Cloudflare edge IP).
+  // X-Real-IP may be set by a frontend proxy to the visitor's true IP (some
+  // proxy subrequests otherwise make cf-connecting-ip the edge IP).
   // Direct app traffic doesn't set it, so cf-connecting-ip (set by the CF edge /
   // tunnel) is the visitor IP there.
   return req.headers["x-real-ip"] || req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress || "";
+}
+
+function firstHeaderValue(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function cloudflareNodeFrom(req) {
+  const cfRay = String(firstHeaderValue(req.headers["cf-ray"]) || "").split(",")[0].trim();
+  const colo = cfRay.match(/-([a-z]{3})(?:\b|$)/i)?.[1]?.toUpperCase() || null;
+  return { colo, ray: cfRay || null };
 }
 
 function logWithIp(ip) {
@@ -191,7 +202,11 @@ function permissionsFor(user) {
   return {
     canViewInventory: role !== "staff",
     canManageInventory: ["warehouse_manager", "admin", "superadmin"].includes(role),
+    canRepairInventory: ["admin", "superadmin"].includes(role),
+    canRequestDisposal: ["warehouse_manager", "admin", "superadmin"].includes(role),
+    canReturnFromRepair: ["warehouse_manager", "admin", "superadmin"].includes(role),
     canManageUsers: ["admin", "superadmin"].includes(role),
+    canReceiveNotifications: role !== "staff",
     canManageAlerts: role === "superadmin",
     canViewUserLogs: role === "superadmin",
     canReviewApprovals: role === "superadmin",
@@ -353,7 +368,7 @@ function bootstrapPayload(state, user) {
     skus: scopeSkusForUser(state, user).map((sku) => skuPayload(state, sku)),
     users: scopeUsersForUser(state, user).map(publicUser),
     records: scopeRecordsForUser(state, user),
-    notifications: state.notifications.filter((notification) => {
+    notifications: user.role === "staff" ? [] : state.notifications.filter((notification) => {
       return (notification.recipientUserIds || []).includes(user.id) || notification.senderUserId === user.id;
     }),
     userLogs: user.role === "superadmin" ? state.userLogs : undefined,
@@ -477,6 +492,7 @@ async function handlePublicRoute(req, res, pathname, method) {
       service: "inventory-borrowing-api",
       version: "0.1.0",
       publicBaseUrl: PUBLIC_BASE_URL,
+      cloudflareNode: cloudflareNodeFrom(req),
       time: now()
     });
   }
@@ -931,7 +947,13 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
       return store.mutate((state) => {
         const warehouse = findWarehouse(state, warehouseId);
         if (!warehouse) return error(res, 404, "Company was not found.", "not_found");
-        const category = { id: id("category"), code: String(body.code || "").trim().toUpperCase(), createdAt: now(), updatedAt: now() };
+        const category = {
+          id: id("category"),
+          code: String(body.code || "").trim().toUpperCase(),
+          branchIds: Array.isArray(body.branchIds) ? body.branchIds : [],
+          createdAt: now(),
+          updatedAt: now()
+        };
         if (!category.code) return error(res, 400, "Category code is required.", "validation_error");
         warehouse.categories ||= [];
         warehouse.categories.push(category);
@@ -947,6 +969,7 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
         const category = warehouse?.categories?.find((candidate) => candidate.id === categoryId);
         if (!category) return error(res, 404, "Category was not found.", "not_found");
         category.code = String(body.code || category.code).trim().toUpperCase();
+        if (Array.isArray(body.branchIds)) category.branchIds = body.branchIds;
         category.updatedAt = now();
         log(state, actor, "category_edit", "category", category.id, `Edited category ${category.code}.`);
         return sendJson(res, 200, { category });
@@ -1337,6 +1360,7 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
         createRecord(state, actor, "return", sku, { userId: borrowerId });
         log(state, actor, "return", "sku", sku.id, `Returned ${sku.skuCode}.`);
       } else if (type === "repair") {
+        if (!["admin", "superadmin"].includes(actor.role)) return error(res, 403, "Only admin or superadmin can request repair.", "forbidden");
         if (sku.status !== "available") return error(res, 409, "Only available equipment can be marked for repair.", "invalid_status");
         sku.status = "repairing";
         sku.repairStartedAt = now();
@@ -1348,6 +1372,7 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
         createRecord(state, actor, "repair", sku);
         log(state, actor, "repair", "sku", sku.id, `Marked ${sku.skuCode} as repairing.`);
       } else {
+        if (actor.role === "staff") return error(res, 403, "Staff cannot return equipment from repair.", "forbidden");
         if (sku.status !== "repairing") return error(res, 409, "Only repairing equipment can be marked repaired.", "invalid_status");
         sku.status = "available";
         sku.repairStartedAt = null;
@@ -1367,11 +1392,11 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
     if (!["warehouse_manager", "admin", "superadmin"].includes(actor.role)) return error(res, 403, "Forbidden.", "forbidden");
     const body = await readBody(req);
     return store.mutate((state) => {
-      const sku = state.skus.find((candidate) => candidate.id === body.skuId);
+      const sku = state.skus.find((candidate) => candidate.id === body.skuId) || findSkuByCode(state, body.skuNumber || body.skuCode);
       if (!sku) return error(res, 404, "SKU was not found.", "not_found");
       if (["disposed", "sold"].includes(sku.status)) return error(res, 409, "Disposed or sold equipment cannot be transferred.", "invalid_status");
       if (!userCanAccessBranch(actor, sku.warehouseId, sku.branchId)) return error(res, 403, "SKU is outside your scope.", "forbidden");
-      const target = findBranchOwner(state, body.targetBranchId || body.targetParkId);
+      const target = findBranchOwner(state, body.toBranchId || body.targetBranchId || body.targetParkId);
       if (!target) return error(res, 404, "Target park was not found.", "not_found");
       if (target.warehouse.id !== sku.warehouseId) return error(res, 400, "Transfer is only allowed within the same company.", "invalid_transfer");
       if (!target.warehouse.categories?.some((category) => category.id === sku.categoryId)) {
@@ -1380,9 +1405,45 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
       const fromBranchId = sku.branchId;
       sku.branchId = target.branch.id;
       sku.updatedAt = now();
-      createRecord(state, actor, "transfer", sku, { fromBranchId, toBranchId: target.branch.id });
+      createRecord(state, actor, "transfer", sku, { fromBranchId, toBranchId: target.branch.id, note: body.reason || "" });
       log(state, actor, "sku_transfer", "sku", sku.id, `Transferred ${sku.skuCode} to ${target.branch.name}.`);
       return sendJson(res, 200, { sku: skuPayload(state, sku) });
+    });
+  }
+
+  if (method === "POST" && pathname === "/api/disposal") {
+    if (!["warehouse_manager", "admin", "superadmin"].includes(actor.role)) return error(res, 403, "Forbidden.", "forbidden");
+    const body = await readBody(req);
+    const reason = String(body.reason || "").trim();
+    const netBookValue = String(body.netBookValue || "").trim();
+    if (!reason || !netBookValue) return error(res, 400, "Reason and net book value are required.", "validation_error");
+    return store.mutate((state) => {
+      const sku = state.skus.find((candidate) => candidate.id === body.skuId) || findSkuByCode(state, body.skuNumber || body.skuCode);
+      if (!sku) return error(res, 404, "SKU was not found.", "not_found");
+      if (["disposed", "sold"].includes(sku.status)) return error(res, 409, "Disposed or sold equipment cannot be disposed again.", "invalid_status");
+      if (!userCanAccessBranch(actor, sku.warehouseId, sku.branchId)) return error(res, 403, "SKU is outside your scope.", "forbidden");
+      const recipients = state.users.filter((user) => user.role === "superadmin" && !user.isDisabled).map((user) => user.id);
+      const notification = {
+        id: id("notification"),
+        type: "disposal_request",
+        title: `Disposal request: ${sku.skuCode}`,
+        body: `${actor.name || actor.username} requested disposal. Reason: ${reason}. Net book value: ${netBookValue}.`,
+        senderUserId: actor.id,
+        recipientUserIds: recipients,
+        status: "pending",
+        relatedEntityType: "sku",
+        relatedEntityId: sku.id,
+        requestedPatch: { action: "disposal", skuId: sku.id, skuCode: sku.skuCode, reason, netBookValue },
+        reviewedByUserId: null,
+        reviewedAt: null,
+        reviewNote: null,
+        createdAt: now(),
+        updatedAt: now()
+      };
+      state.notifications.unshift(notification);
+      emailNotification(state, notification);
+      log(state, actor, "sku_disposal_request", "sku", sku.id, `Requested disposal for ${sku.skuCode}.`);
+      return sendJson(res, 200, { sku: skuPayload(state, sku), notification });
     });
   }
 
@@ -1456,6 +1517,9 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
         const user = state.users.find((candidate) => candidate.id === userId);
         if (!user) return error(res, 404, "User was not found.", "not_found");
         if (actor.role === "admin" && ["admin", "superadmin"].includes(user.role)) return error(res, 403, "Forbidden.", "forbidden");
+        if (state.skus.some((sku) => sku.borrowedByUserId === user.id)) {
+          return error(res, 409, "This user still has borrowed equipment.", "borrowed_items_exist");
+        }
         user.isDisabled = true;
         user.disabledAt = now();
         user.sessions = [];
@@ -1508,6 +1572,7 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
   }
 
   if (method === "GET" && pathname === "/api/notifications") {
+    if (actor.role === "staff") return sendJson(res, 200, { notifications: [] });
     return sendJson(res, 200, {
       notifications: store.data.notifications.filter((notification) => {
         return (notification.recipientUserIds || []).includes(actor.id) || notification.senderUserId === actor.id;
@@ -1516,6 +1581,7 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
   }
 
   if (method === "POST" && pathname === "/api/notifications") {
+    if (actor.role === "staff") return error(res, 403, "Staff cannot create notifications.", "forbidden");
     const body = await readBody(req);
     return store.mutate((state) => {
       const notification = {
@@ -1542,8 +1608,45 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
     });
   }
 
+  const notificationReviewRoute = pathname.match(/^\/api\/notifications\/([^/]+)\/review$/);
+  if (notificationReviewRoute && method === "POST") {
+    if (actor.role === "staff") return error(res, 403, "Staff cannot review notifications.", "forbidden");
+    const body = await readBody(req);
+    return store.mutate((state) => {
+      const notification = state.notifications.find((candidate) => candidate.id === notificationReviewRoute[1]);
+      if (!notification) return error(res, 404, "Notification was not found.", "not_found");
+      if (actor.role !== "superadmin" && !(notification.recipientUserIds || []).includes(actor.id)) {
+        return error(res, 403, "Forbidden.", "forbidden");
+      }
+      const approved = body.status === "approved" || body.approved === true;
+      notification.status = approved ? "approved" : "denied";
+      if (body.reviewNote != null) notification.reviewNote = String(body.reviewNote);
+      notification.reviewedByUserId = actor.id;
+      notification.reviewedAt = now();
+      notification.updatedAt = now();
+      if (approved && notification.requestedPatch?.action === "disposal") {
+        const sku = state.skus.find((candidate) => candidate.id === notification.requestedPatch.skuId);
+        if (sku && !["disposed", "sold"].includes(sku.status)) {
+          sku.status = "disposed";
+          sku.disposalType = "disposed_from_inventory";
+          sku.disposalReason = notification.requestedPatch.reason || "";
+          sku.netBookValue = notification.requestedPatch.netBookValue || "";
+          sku.updatedAt = now();
+          createRecord(state, actor, "disposal", sku, {
+            note: sku.disposalReason,
+            metadata: { netBookValue: sku.netBookValue, notificationId: notification.id }
+          });
+          log(state, actor, "sku_disposal", "sku", sku.id, `Approved disposal for ${sku.skuCode}.`);
+        }
+      }
+      log(state, actor, "notification_review", "notification", notification.id, `Reviewed notification ${notification.title}.`);
+      return sendJson(res, 200, { notification });
+    });
+  }
+
   const notificationRoute = pathname.match(/^\/api\/notifications\/([^/]+)$/);
   if (notificationRoute && method === "PATCH") {
+    if (actor.role === "staff") return error(res, 403, "Staff cannot update notifications.", "forbidden");
     const body = await readBody(req);
     return store.mutate((state) => {
       const notification = state.notifications.find((candidate) => candidate.id === notificationRoute[1]);
@@ -1553,7 +1656,7 @@ async function handleAuthenticatedRoute(req, res, pathname, method, auth, url) {
       }
       if (body.status) notification.status = body.status;
       if (body.reviewNote != null) notification.reviewNote = String(body.reviewNote);
-      if (["approved", "rejected"].includes(body.status)) {
+      if (["approved", "denied", "rejected"].includes(body.status)) {
         notification.reviewedByUserId = actor.id;
         notification.reviewedAt = now();
       }

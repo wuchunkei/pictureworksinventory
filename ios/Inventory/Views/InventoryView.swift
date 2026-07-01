@@ -384,6 +384,18 @@ struct SKUDetailView: View {
         appState.currentUser?.role == .superadmin
     }
 
+    private var canRepair: Bool {
+        appState.canRepairInventory
+    }
+
+    private var canRequestDisposal: Bool {
+        appState.canRequestDisposal
+    }
+
+    private var canReturnFromRepair: Bool {
+        appState.canReturnFromRepair
+    }
+
     private var recentRecords: [InventoryRecord] {
         guard let cutoff = Calendar.current.date(byAdding: .day, value: -7, to: Date()) else { return [] }
         return appState.records.filter { record in
@@ -483,14 +495,18 @@ struct SKUDetailView: View {
                             Label("Edit", systemImage: "pencil")
                         }
                     }
-                    Button { showingActionScanner = true } label: {
-                        Label("Request Repair", systemImage: "wrench.and.screwdriver")
+                    if canRepair {
+                        Button { showingActionScanner = true } label: {
+                            Label("Request Repair", systemImage: "wrench.and.screwdriver")
+                        }
                     }
                     Button { showingTransfer = true } label: {
                         Label("Transfer", systemImage: "arrow.triangle.swap")
                     }
-                    Button(role: .destructive) { showingDisposal = true } label: {
-                        Label("Request Disposal", systemImage: "xmark.bin")
+                    if canRequestDisposal {
+                        Button(role: .destructive) { showingDisposal = true } label: {
+                            Label("Request Disposal", systemImage: "xmark.bin")
+                        }
                     }
                 } else {
                     Text("No actions available.").foregroundStyle(.secondary).font(.subheadline)
@@ -500,8 +516,10 @@ struct SKUDetailView: View {
                     Label("Return", systemImage: "arrow.uturn.left")
                 }
             case .repairing:
-                Button { actionError = nil; showingReturnScan = true } label: {
-                    Label("Return from Repair", systemImage: "checkmark.circle")
+                if canReturnFromRepair {
+                    Button { actionError = nil; showingReturnScan = true } label: {
+                        Label("Return from Repair", systemImage: "checkmark.circle")
+                    }
                 }
             case .disposed, .sold:
                 Text("No actions available.").foregroundStyle(.secondary).font(.subheadline)
